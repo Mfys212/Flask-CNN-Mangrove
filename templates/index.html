@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='daun.png') }}" type="image/png">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Mangrove Identification</title>
+</head>
+<body>
+<div class="file-upload">
+    <button class="file-upload-btn" type="button" onclick="$('.file-upload-input').trigger('click')">Add Image</button>
+    <center>
+        <h4 id="prediction-result"></h4>
+        <h4 id="confidence-result"></h4>
+        <h4 id="loading-text" style="display: none;">Loading...</h4>
+    </center>
+    <form id="upload-form" method="post" enctype="multipart/form-data">
+        <div class="image-upload-wrap">
+            <input class="file-upload-input" type='file' name='file' onchange="readURL(this);" accept="image/*" />
+            <div class="drag-text">
+                <h3>Drag and drop or select Image</h3>
+            </div>
+        </div>
+        <div class="file-upload-content" style="display: none;">
+            <img class="file-upload-image" src="#" alt="your image" />
+            <div class="image-title-wrap">
+                <button type="button" class="predict-image" onclick="submitForm()">Identification</button>
+                <button type="button" onclick="removeUpload()" class="remove-image">Remove</button>
+            </div>
+        </div>
+    </form>
+    <center>
+        <div class="drag-text2">
+            <h4>&copy; Sains Data Institut Teknologi Sumatera</h4>
+        </div>
+    </center>
+</div>
+<script>
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('.image-upload-wrap').hide();
+                $('.file-upload-image').attr('src', e.target.result);
+                $('.file-upload-content').show();
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            removeUpload();
+        }
+        $('#prediction-result').text('');
+        $('#confidence-result').text('');
+        $('#loading-text').hide();
+    }
+
+    function removeUpload() {
+        $('.file-upload-input').replaceWith($('.file-upload-input').clone());
+        $('.file-upload-content').hide();
+        $('.image-upload-wrap').show();
+        $('.file-upload-btn').text('Add Image');
+        $('#prediction-result').text('');
+        $('#confidence-result').text('');
+        $('#loading-text').hide();
+    }
+
+    function submitForm() {
+        var formData = new FormData($('#upload-form')[0]);
+        $('#loading-text').show();
+        $.ajax({
+            url: '/predict',
+            type: 'POST',
+            data: formData,
+            contentType: false,
+            processData: false,
+            success: function(response) {
+                $('#loading-text').hide();
+                if (response.error) {
+                    $('#prediction-result').text(response.error);
+                } else {
+                    $('#prediction-result').text('Identification Results: ' + response.predict);
+                    $('#confidence-result').text('Confidence Score: ' + response.conf);
+                    $('.predict-image').text('Identification');
+                }
+            }
+        });
+    }
+
+    if (window.history.replaceState) {
+        window.history.replaceState(null, null, window.location.href);
+    }
+</script>
+</body>
+</html>
